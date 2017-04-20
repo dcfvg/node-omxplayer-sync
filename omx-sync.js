@@ -1,6 +1,6 @@
 var fs = require('fs');
 var server = require('http').createServer();
-var socket = require('socket.io-client')('http://192.168.0.99:3000');
+var socket = require('socket.io-client')('http://192.168.1.11:3000');
 // var io = require('socket.io')(server);
 var io = require('socket.io')(server, {'pingInterval': 10000, 'pingTimeout': 15000});
 var dbus = require('dbus-native');
