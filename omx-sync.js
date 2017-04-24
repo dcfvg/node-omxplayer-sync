@@ -10,6 +10,7 @@ var currentPosition, totalDuration;
 var bus; //main DBUS
 var gate = true;
 var omx;
+var resetOnNewClientTimeout;
 
 server.listen(3000, function() { console.log( 'Listening on port 3000') });
 
@@ -50,25 +51,29 @@ omx.on('exit', function(code){
 io.on('connection', function(socket){
 
   var address = socket.handshake.address;
-  console.log('Listener '+ address.address+' connected: ' + socket.id + ' @ ' + Date());
+  var infos = address + '\t' + socket.id + ' \t  ' + Date();
+
+  console.log('[!]\tconnected\t'+ infos);
 
   // fire loop flag on client connection
-  setTimeout(function(){
+  clearTimeout(resetOnNewClientTimeout);
+  console.log('[R]\tReset in 5s\t (new connection from '+ address+')');
+  resetOnNewClientTimeout = setTimeout(function(){
     io.emit('loopFlag', { loopFlag : 'loop' });
-  }, 4000);
+  }, 5000);
 
   socket.on('disconnect', function(){
-    console.log('Listener '+ address.address+' disconnected: ' + socket.id + ' @ ' + Date());
+    console.log('[x]\tdisconnected\t'+ infos);
   });
 
 });
 
 socket.on('connect', function(){
-  console.log('Connected to the broadcaster as: ' + socket.id + ' @ ' + Date() );
+  console.log('\nConnected to the broadcaster as: ' + socket.id + ' @ ' + Date()+' \n' );
 });
 
 socket.on('loopFlag', function(loopFlag){
-  console.log('loop flag recieved  @ ' + Date());
+  console.log('\tloop flag recieved  \t\t ' + Date());
   seek( s2micro(1) );
   setTimeout(function(){ gate = true },1000)
 })
@@ -88,7 +93,7 @@ setTimeout(function(){ //wait for dbus to become available.
       destination: 'org.mpris.MediaPlayer2.omxplayer',
     }, function(err, duration) {
       totalDuration = duration; //set to a global
-      console.log('Duration: ' + totalDuration);
+      // console.log('Duration: ' + totalDuration);
     });
 
     //send out loop flag
@@ -105,7 +110,7 @@ setTimeout(function(){ //wait for dbus to become available.
 
       if(currentPosition >= totalDuration - s2micro(1) && gate == true){ //are we in the end range of the file?
         gate = false;
-        console.log( '*File Ended @ ' + Date() );
+        console.log( '\tFile Ended @  \t\t ' + Date() );
         io.emit('loopFlag', { loopFlag : 'loop' }); //add one of these above outside the interval loop to reset when the server boots?
       };
 
