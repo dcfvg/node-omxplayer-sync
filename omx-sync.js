@@ -10,7 +10,7 @@ var currentPosition, totalDuration;
 var bus; //main DBUS
 var gate = true;
 var omx;
-var resetOnNewClientTimeout;
+var inReset = false;
 
 server.listen(3000, function() { console.log( 'Listening on port 3000') });
 
@@ -56,11 +56,16 @@ io.on('connection', function(socket){
   console.log('[!]\tconnected\t'+ infos);
 
   // fire loop flag on client connection
-  clearTimeout(resetOnNewClientTimeout);
-  console.log('[R]\tReset in 5s\t (new connection from '+ address+')');
-  resetOnNewClientTimeout = setTimeout(function(){
-    io.emit('loopFlag', { loopFlag : 'loop' });
-  }, 5000);
+  if(!inReset){
+    inReset = true;
+
+    console.log('[R]\tReset in 5s\t (new connection from '+ address+')');
+
+    resetOnNewClientTimeout = setTimeout(function(){
+      io.emit('loopFlag', { loopFlag : 'loop' });
+    }, 5000);
+  }
+
 
   socket.on('disconnect', function(){
     console.log('[x]\tdisconnected\t'+ infos);
@@ -110,7 +115,7 @@ setTimeout(function(){ //wait for dbus to become available.
 
       if(currentPosition >= totalDuration - s2micro(1) && gate == true){ //are we in the end range of the file?
         gate = false;
-        console.log( '\tFile Ended @  \t\t ' + Date() );
+        console.log( '\tFile Ended \t\t\t ' + Date() );
         io.emit('loopFlag', { loopFlag : 'loop' }); //add one of these above outside the interval loop to reset when the server boots?
       };
 
