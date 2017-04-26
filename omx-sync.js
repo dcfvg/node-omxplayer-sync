@@ -56,13 +56,15 @@ io.on('connection', function(socket){
   console.log('[!]\tconnected\t'+ infos);
 
   // fire loop flag on client connection
+  console.log('R',inReset,'G',gate);
   if(!inReset){
-    inReset = true;
 
+    inReset = true;
     console.log('[R]\tReset in 5s\t (new connection from '+ address+')');
 
     resetOnNewClientTimeout = setTimeout(function(){
       io.emit('loopFlag', { loopFlag : 'loop' });
+      inReset = false;
     }, 5000);
   }
 
@@ -78,9 +80,10 @@ socket.on('connect', function(){
 });
 
 socket.on('loopFlag', function(loopFlag){
-  console.log('\tloop flag recieved  \t\t ' + Date());
+  console.log('[>]\tloop flag recieved  \t\t ' + Date() + '\t' + inReset);
+
   seek( s2micro(1) );
-  setTimeout(function(){ gate = true },1000)
+  setTimeout(function(){ gate = true}, 1000)
 })
 
 //DBUS HANDLING
@@ -98,7 +101,7 @@ setTimeout(function(){ //wait for dbus to become available.
       destination: 'org.mpris.MediaPlayer2.omxplayer',
     }, function(err, duration) {
       totalDuration = duration; //set to a global
-      // console.log('Duration: ' + totalDuration);
+      console.log('Duration: ' + totalDuration);
     });
 
     //send out loop flag
@@ -115,7 +118,7 @@ setTimeout(function(){ //wait for dbus to become available.
 
       if(currentPosition >= totalDuration - s2micro(1) && gate == true){ //are we in the end range of the file?
         gate = false;
-        console.log( '\tFile Ended \t\t\t ' + Date() );
+        console.log( '\tvideo Ended \t\t\t ' + Date() );
         io.emit('loopFlag', { loopFlag : 'loop' }); //add one of these above outside the interval loop to reset when the server boots?
       };
 
